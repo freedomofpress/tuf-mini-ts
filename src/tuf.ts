@@ -105,26 +105,34 @@ export class TUFClient {
 
     let keys: Map<string, CryptoKey>;
     let threshold: number;
+    let roleKeys: string[];
 
     // If no oldroot, this is a fresh start from a trusted file, so it's self signed
     if (oldroot == undefined) {
-      keys = await loadKeys(json.signed.keys, json.signed.roles.root.keyids);
+      keys = await loadKeys(json.signed.keys);
+      roleKeys = json.signed.roles.root.keyids;
       threshold = json.signed.roles.root.threshold;
     } else {
       keys = oldroot.keys;
+      roleKeys = oldroot.roles["root"].keyids;
       // We should respect the previous threshold, otherwise it does not make sense
       threshold = oldroot.threshold;
     }
 
     if (
-      (await checkSignatures(keys, json.signed, json.signatures, threshold)) !==
-      true
+      (await checkSignatures(
+        keys,
+        roleKeys,
+        json.signed,
+        json.signatures,
+        threshold,
+      )) !== true
     ) {
       throw new Error("Failed to verify metafile.");
     }
 
     // If we are loading a new root, let's load the new keys since we have verified them
-    keys = await loadKeys(json.signed.keys, json.signed.roles.root.keyids);
+    keys = await loadKeys(json.signed.keys);
 
     if (!Number.isSafeInteger(json.signed.version) || json.signed.version < 1) {
       throw new Error("There is something wrong with the root version number.");
@@ -228,6 +236,7 @@ export class TUFClient {
       // Spec 5.4.2
       await checkSignatures(
         keys,
+        root.roles["timestamp"].keyids,
         newTimestamp.signed,
         newTimestamp.signatures,
         root.roles.timestamp.threshold,
@@ -296,6 +305,7 @@ export class TUFClient {
       // Spec 5.5.3
       await checkSignatures(
         keys,
+        root.roles["snapshot"].keyids,
         newSnapshot.signed,
         newSnapshot.signatures,
         root.roles.snapshot.threshold,
@@ -389,6 +399,7 @@ export class TUFClient {
       // Spec 5.6.3
       await checkSignatures(
         keys,
+        root.roles["snapshot"].keyids,
         newTargets.signed,
         newTargets.signatures,
         root.roles.targets.threshold,

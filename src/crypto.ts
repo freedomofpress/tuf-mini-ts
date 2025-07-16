@@ -32,7 +32,6 @@ export function getRoleKeys(
 
 export async function loadKeys(
   keys: Signed["keys"],
-  allowedKeys: string[],
 ): Promise<Map<string, CryptoKey>> {
   const importedKeys: Map<string, CryptoKey> = new Map();
   for (const keyId in keys) {
@@ -51,10 +50,7 @@ export async function loadKeys(
         ),
       ),
     );
-    // Only import keys allowed for the role
-    if (!allowedKeys.includes(verified_keyId)) {
-      continue;
-    }
+
     // Check for key duplicates
     if (importedKeys.has(verified_keyId)) {
       throw new Error("Duplicate keyId found!");
@@ -76,6 +72,7 @@ export async function loadKeys(
       await importKey(key.keytype, key.scheme, key.keyval.public),
     );
   }
+
   return importedKeys;
 }
 
@@ -220,6 +217,7 @@ export async function verifySignature(
 
 export async function checkSignatures(
   keys: Map<string, CryptoKey>,
+  roleKeys: string[],
   signed: object,
   signatures: Signature[],
   threshold: number,
@@ -238,7 +236,7 @@ export async function checkSignatures(
   }
 
   // Let's keep this set as a reference to verify that there are no duplicate keys used
-  const keyIds = new Set(keys.keys());
+  const keyIds = new Set(roleKeys);
 
   // Let's canonicalize first the body
   const signed_canon = canonicalize(signed);
@@ -246,7 +244,7 @@ export async function checkSignatures(
   let valid_signatures = 0;
   for (const signature of signatures) {
     // Step 1, check if keyid is in the keyIds array
-    if (keyIds.has(signature.keyid) !== true) {
+    if (!keyIds.has(signature.keyid) !== true) {
       continue;
       // Originally we would throw an error: but it make sense for a new signer to sign the new manifest
       // we just have to be sure not to count it and hit the threshold
