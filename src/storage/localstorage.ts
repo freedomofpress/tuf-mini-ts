@@ -1,5 +1,5 @@
-import { FileBackend } from "../storage";
-import { Metafile } from "../types";
+import { FileBackend } from "../storage.js";
+import { Metafile } from "../types.js";
 
 export class LocalStorageBackend implements FileBackend {
   async read(key: string): Promise<Metafile | undefined> {

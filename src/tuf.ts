@@ -1,28 +1,24 @@
-import { checkSignatures, getRoleKeys, loadKeys } from "./crypto";
-import { FileBackend } from "./storage";
-import { ExtensionStorageBackend } from "./storage/browser";
-import { FSBackend } from "./storage/filesystem";
-import { LocalStorageBackend } from "./storage/localstorage";
-import { HashAlgorithms, Meta, Metafile, Roles, Root } from "./types";
-import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding";
+import { checkSignatures, getRoleKeys, loadKeys } from "./crypto.js";
+import { FileBackend } from "./storage.js";
+import { ExtensionStorageBackend } from "./storage/browser.js";
+import { FSBackend } from "./storage/filesystem.js";
+import { LocalStorageBackend } from "./storage/localstorage.js";
+import { HashAlgorithms, Meta, Metafile, Roles, Root } from "./types.js";
+import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding.js";
 
 export class TUFClient {
   private repositoryUrl: string;
-  private startingRootPath: string;
+  private startingRoot: string;
   private namespace: string;
   private backend: FileBackend;
 
-  constructor(
-    repositoryUrl: string,
-    startingRootPath: string,
-    namespace: string,
-  ) {
+  constructor(repositoryUrl: string, startingRoot: string, namespace: string) {
     this.repositoryUrl = repositoryUrl;
-    this.startingRootPath = startingRootPath;
+    this.startingRoot = startingRoot;
     this.namespace = namespace;
 
     if (typeof process !== "undefined" && process.versions?.node) {
-      this.backend = new FSBackend(`./${this.namespace}`);
+      this.backend = new FSBackend();
     } else if (typeof browser !== "undefined" && browser.storage?.local) {
       this.backend = new ExtensionStorageBackend();
     } else if (typeof localStorage !== "undefined") {
@@ -33,7 +29,7 @@ export class TUFClient {
   }
 
   private getCacheKey(key: string): string {
-    return `${this.namespace}:${key}`;
+    return `${this.namespace}/${key}.json`;
   }
 
   private async getFromCache(key: string): Promise<Metafile | undefined> {
@@ -91,12 +87,9 @@ export class TUFClient {
     return new Uint8Array(await response.arrayBuffer());
   }
 
-  private async openBootstrapRoot(file: string): Promise<Metafile> {
+  private bootstrapRoot(file: string): Promise<Metafile> {
     try {
-      const response = await fetch(browser.runtime.getURL(file));
-      const json = await response.json();
-
-      return json;
+      return JSON.parse(file);
     } catch (error) {
       throw new Error(`Failed to load the JSON file:  ${error}`);
     }
@@ -159,7 +152,7 @@ export class TUFClient {
       // Then load the hardcoded startup root
       console.log("[TUF]", "Starting from hardcoded root");
       // Spec 5.2
-      rootJson = await this.openBootstrapRoot(this.startingRootPath);
+      rootJson = await this.bootstrapRoot(this.startingRoot);
     }
 
     let root = await this.loadRoot(rootJson as Metafile);

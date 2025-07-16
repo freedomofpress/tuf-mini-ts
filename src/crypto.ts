@@ -1,19 +1,19 @@
-import { toDER } from "./pem";
 import {
   EcdsaTypes,
   HashAlgorithms,
   KeyTypes,
   Signature,
   Signed,
-} from "./types";
-import { ASN1Obj } from "./utils/asn1";
-import { canonicalize } from "./utils/canonicalize";
+} from "./types.js";
+import { ASN1Obj } from "./utils/asn1/index.js";
+import { canonicalize } from "./utils/canonicalize.js";
 import {
   base64ToUint8Array,
   hexToUint8Array,
   stringToUint8Array,
   Uint8ArrayToHex,
-} from "./utils/encoding";
+} from "./utils/encoding.js";
+import { toDER } from "./utils/pem.js";
 
 // We use this to remove to select from the root keys only the ones allowed for a specific role
 export function getRoleKeys(

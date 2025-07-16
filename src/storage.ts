@@ -3,7 +3,7 @@
 //  - Running in a browser extension (extensions storage)
 //  - Running in node (filesystem)
 
-import { Metafile } from "./types";
+import { Metafile } from "./types.js";
 
 export interface FileBackend {
   read(key: string): Promise<Metafile | undefined>;

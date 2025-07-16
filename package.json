@@ -1,8 +1,9 @@
 {
-  "name": "sigsum-ts",
+  "name": "tuf-mini-ts",
   "version": "0.1",
   "description": "A Sigsum proof verifier for the browser.",
-  "main": "dist/index.js",
+  "main": "dist/cli.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -10,9 +11,8 @@
     "lint": "npx eslint . --fix && npx prettier --write ."
   },
   "keywords": [
-    "sigsum",
-    "ed25519",
-    "transparency",
+    "theupdateframework",
+    "tuf",
     "browser",
     "typescript"
   ],
