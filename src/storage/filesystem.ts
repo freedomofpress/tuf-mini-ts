@@ -1,6 +1,6 @@
-import * as fs from 'node:fs/promises';
-import { FileBackend } from '../storage';
+import * as fs from "node:fs/promises";
 
+import { FileBackend } from "../storage";
 
 export class FSBackend implements FileBackend {
   constructor(private basePath: string) {}
@@ -21,4 +21,3 @@ export class FSBackend implements FileBackend {
     await fs.unlink(`${this.basePath}/${key}`);
   }
 }
-

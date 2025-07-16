@@ -1,6 +1,6 @@
 import { checkSignatures, getRoleKeys, loadKeys } from "./crypto";
-import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding";
 import { HashAlgorithms, Meta, Metafile, Roles, Root } from "./types";
+import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding";
 
 export class TUFClient {
   private repositoryUrl: string;

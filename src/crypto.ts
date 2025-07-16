@@ -1,19 +1,19 @@
-import { ASN1Obj } from "./asn1";
-import { canonicalize } from "./canonicalize";
-import {
-  base64ToUint8Array,
-  hexToUint8Array,
-  stringToUint8Array,
-  Uint8ArrayToHex,
-} from "./encoding";
+import { toDER } from "./pem";
 import {
   EcdsaTypes,
   HashAlgorithms,
   KeyTypes,
   Signature,
   Signed,
-} from "./interfaces";
-import { toDER } from "./pem";
+} from "./types";
+import { ASN1Obj } from "./utils/asn1";
+import { canonicalize } from "./utils/canonicalize";
+import {
+  base64ToUint8Array,
+  hexToUint8Array,
+  stringToUint8Array,
+  Uint8ArrayToHex,
+} from "./utils/encoding";
 
 // We use this to remove to select from the root keys only the ones allowed for a specific role
 export function getRoleKeys(
@@ -123,7 +123,7 @@ export async function importKey(
     params.algorithm = { name: "Ed25519" };
   } else if (keytype.toLowerCase().includes("rsa")) {
     // Is it even worth to think of supporting it?
-    throw new Error("TODO (or maybe not): impleent RSA keys support.");
+    throw new Error("TODO (or maybe not): implement RSA keys support.");
   } else {
     throw new Error(`Unsupported ${keytype}`);
   }
@@ -153,7 +153,7 @@ export async function verifySignature(
   };
 
   if (key.algorithm.name === KeyTypes.Ecdsa) {
-    // Later we need to supply exactly sized R and R dependingont he curve for sig verification
+    // Later we need to supply exactly sized R and R depending on the curve for sig verification
     const namedCurve = (key.algorithm as EcKeyAlgorithm).namedCurve;
     let sig_size = 32;
 

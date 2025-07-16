@@ -57,4 +57,3 @@ export class FSBackend implements FileBackend {
     await fs.unlink(`${this.basePath}/${key}`);
   }
 }
-

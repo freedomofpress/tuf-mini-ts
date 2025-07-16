@@ -1,4 +1,4 @@
-import { FileBackend } from '../storage';
+import { FileBackend } from "../storage";
 
 export class LocalStorageBackend implements FileBackend {
   async read(key: string): Promise<string | null> {

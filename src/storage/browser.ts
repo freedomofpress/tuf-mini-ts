@@ -1,4 +1,4 @@
-import { FileBackend } from '../storage';
+import { FileBackend } from "../storage";
 
 export class ExtensionStorageBackend implements FileBackend {
   async read(key: string): Promise<string | null> {

@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { ByteStream } from "../stream";
 import { ASN1ParseError, ASN1TypeError } from "./error";
 import { decodeLength, encodeLength } from "./length";
 import {
@@ -23,6 +22,7 @@ import {
   parseOID,
   parseTime,
 } from "./parse";
+import { ByteStream } from "./stream";
 import { ASN1Tag } from "./tag";
 
 export class ASN1Obj {
