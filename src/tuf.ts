@@ -51,10 +51,10 @@ export class TUFClient {
     if (!target) {
       url =
         version !== -1
-          ? `${this.repositoryUrl}/${version}.${role}.json`
-          : `${this.repositoryUrl}/${role}.json`;
+          ? `${this.repositoryUrl}${version}.${role}.json`
+          : `${this.repositoryUrl}${role}.json`;
     } else {
-      url = `${this.repositoryUrl}/${version}.${role}`;
+      url = `${this.repositoryUrl}${version}.${role}`;
     }
 
     console.log("[TUF]", "Fetching", url);
