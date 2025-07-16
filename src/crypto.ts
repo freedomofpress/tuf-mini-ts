@@ -244,7 +244,7 @@ export async function checkSignatures(
   let valid_signatures = 0;
   for (const signature of signatures) {
     // Step 1, check if keyid is in the keyIds array
-    if (!keyIds.has(signature.keyid) !== true) {
+    if (!keyIds.has(signature.keyid)) {
       continue;
       // Originally we would throw an error: but it make sense for a new signer to sign the new manifest
       // we just have to be sure not to count it and hit the threshold
