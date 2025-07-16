@@ -1,12 +1,16 @@
 import { FileBackend } from "../storage";
+import { Metafile } from "../types";
 
 export class LocalStorageBackend implements FileBackend {
-  async read(key: string): Promise<string | null> {
-    return localStorage.getItem(key);
+  async read(key: string): Promise<Metafile | undefined> {
+    const value = localStorage.getItem(key);
+    if (value) {
+      return JSON.parse(value);
+    }
   }
 
-  async write(key: string, value: string): Promise<void> {
-    localStorage.setItem(key, value);
+  async write(key: string, value: Metafile): Promise<void> {
+    localStorage.setItem(key, JSON.stringify(value));
   }
 
   async delete(key: string): Promise<void> {

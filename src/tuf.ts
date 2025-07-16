@@ -1,4 +1,8 @@
 import { checkSignatures, getRoleKeys, loadKeys } from "./crypto";
+import { FileBackend } from "./storage";
+import { ExtensionStorageBackend } from "./storage/browser";
+import { FSBackend } from "./storage/filesystem";
+import { LocalStorageBackend } from "./storage/localstorage";
 import { HashAlgorithms, Meta, Metafile, Roles, Root } from "./types";
 import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding";
 
@@ -6,6 +10,7 @@ export class TUFClient {
   private repositoryUrl: string;
   private startingRootPath: string;
   private namespace: string;
+  private backend: FileBackend;
 
   constructor(
     repositoryUrl: string,
@@ -15,6 +20,16 @@ export class TUFClient {
     this.repositoryUrl = repositoryUrl;
     this.startingRootPath = startingRootPath;
     this.namespace = namespace;
+
+    if (typeof process !== "undefined" && process.versions?.node) {
+      this.backend = new FSBackend(`./${this.namespace}`);
+    } else if (typeof browser !== "undefined" && browser.storage?.local) {
+      this.backend = new ExtensionStorageBackend();
+    } else if (typeof localStorage !== "undefined") {
+      this.backend = new LocalStorageBackend();
+    } else {
+      throw new Error("No cache backend available");
+    }
   }
 
   private getCacheKey(key: string): string {
@@ -23,13 +38,12 @@ export class TUFClient {
 
   private async getFromCache(key: string): Promise<Metafile | undefined> {
     const namespacedKey = this.getCacheKey(key);
-    const result = await browser.storage.local.get(namespacedKey);
-    return result[namespacedKey];
+    return await this.backend.read(namespacedKey);
   }
 
-  private async setInCache(key: string, value: object): Promise<void> {
+  private async setInCache(key: string, value: Metafile): Promise<void> {
     const namespacedKey = this.getCacheKey(key);
-    await browser.storage.local.set({ [namespacedKey]: value });
+    await this.backend.write(namespacedKey, value);
   }
 
   private async fetchMetafileBase(
