@@ -1,0 +1,28 @@
+# .github/workflows/conformance.yml
+name: tuf-conformance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tuf-conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+      - run: npm run build
+      - run: chmod +x dist/cli.js
+
+      - uses: theupdateframework/tuf-conformance@v2
+        with:
+          entrypoint: dist/cli.js
+
