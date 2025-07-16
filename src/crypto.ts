@@ -32,6 +32,7 @@ export function getRoleKeys(
 
 export async function loadKeys(
   keys: Signed["keys"],
+  allowedKeys: string[],
 ): Promise<Map<string, CryptoKey>> {
   const importedKeys: Map<string, CryptoKey> = new Map();
   for (const keyId in keys) {
@@ -50,6 +51,10 @@ export async function loadKeys(
         ),
       ),
     );
+    // Only import keys allowed for the role
+    if (!allowedKeys.includes(verified_keyId)) {
+      continue;
+    }
     // Check for key duplicates
     if (importedKeys.has(verified_keyId)) {
       throw new Error("Duplicate keyId found!");

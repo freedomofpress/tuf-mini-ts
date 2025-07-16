@@ -108,9 +108,7 @@ export class TUFClient {
 
     // If no oldroot, this is a fresh start from a trusted file, so it's self signed
     if (oldroot == undefined) {
-      keys = await loadKeys(json.signed.keys);
-      // ~~We want to check everybody signed the bootstrap file or I wish~~
-      // Instead we are using the threshold specified in the same file
+      keys = await loadKeys(json.signed.keys, json.signed.roles.root.keyids);
       threshold = json.signed.roles.root.threshold;
     } else {
       keys = oldroot.keys;
@@ -126,9 +124,7 @@ export class TUFClient {
     }
 
     // If we are loading a new root, let's load the new keys since we have verified them
-    if (oldroot != undefined) {
-      keys = await loadKeys(json.signed.keys);
-    }
+    keys = await loadKeys(json.signed.keys, json.signed.roles.root.keyids);
 
     if (!Number.isSafeInteger(json.signed.version) || json.signed.version < 1) {
       throw new Error("There is something wrong with the root version number.");
