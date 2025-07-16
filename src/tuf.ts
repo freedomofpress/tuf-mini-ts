@@ -200,7 +200,7 @@ export class TUFClient {
         );
       }
       // By spec 5.3.8, we should update the cache now
-      this.setInCache(Roles.Root, newrootJson);
+      await this.setInCache(Roles.Root, newrootJson);
     }
 
     // We do not cast expires because it is done in loadRoot
@@ -273,7 +273,7 @@ export class TUFClient {
       throw new Error("Freeze attack on the timestamp metafile.");
     }
 
-    this.setInCache(Roles.Timestamp, newTimestamp);
+    await this.setInCache(Roles.Timestamp, newTimestamp);
     return newTimestamp.signed.meta["snapshot.json"].version;
   }
 
@@ -346,7 +346,7 @@ export class TUFClient {
     }
 
     // 5.5.7
-    this.setInCache(Roles.Snapshot, newSnapshot);
+    await this.setInCache(Roles.Snapshot, newSnapshot);
 
     // If we reach here, we expect updates, otherwise we would have aborted in the timestamp phase.
     return newSnapshot.signed.meta;
@@ -424,7 +424,7 @@ export class TUFClient {
     }
 
     // 5.6.6
-    this.setInCache(Roles.Targets, newTargets);
+    await this.setInCache(Roles.Targets, newTargets);
   }
 
   public async listSignedTargets() {
@@ -478,7 +478,7 @@ export class TUFClient {
       }
 
       const verifiedTarget = JSON.parse(Uint8ArrayToString(raw_file));
-      this.setInCache(name, verifiedTarget);
+      await this.setInCache(name, verifiedTarget);
       return verifiedTarget;
     } else {
       return cachedTarget;
