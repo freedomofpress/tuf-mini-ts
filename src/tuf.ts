@@ -324,7 +324,7 @@ export class TUFClient {
     // 5.5.5
     if (cachedSnapshot !== undefined) {
       for (const [target] of Object.entries(cachedSnapshot.signed.meta)) {
-        if (!newSnapshot.signed.meta.has(target)) {
+        if (target in newSnapshot.signed.meta !== true) {
           throw new Error(
             "Target that was listed in an older snapshot was dropped in a newer one.",
           );
