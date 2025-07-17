@@ -399,7 +399,7 @@ export class TUFClient {
     if (
       (await checkSignatures(
         keys,
-        root.roles["snapshot"].keyids,
+        root.roles["targets"].keyids,
         newTargets.signed,
         newTargets.signatures,
         root.roles.targets.threshold,
