@@ -48,6 +48,7 @@ export class TUFClient {
     target: boolean = false,
   ): Promise<Response> {
     let url;
+    role = encodeURIComponent(role);
     if (!target) {
       url =
         version !== -1
