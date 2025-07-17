@@ -76,16 +76,7 @@ export class TUFClient {
     version: number | string = -1,
   ): Promise<Metafile> {
     const response = await this.fetchMetafileBase(role, version);
-    const metafile = (await response.json()) as Metafile;
-    if (version !== metafile.signed.version) {
-      throw new Error(
-        "Mismatch between version in the URL and version in the JSON.",
-      );
-    }
-    if (role !== metafile.signed._type) {
-      throw new Error("Mismatch between type in the URL and type in the JSON.");
-    }
-    return metafile;
+    return (await response.json()) as Metafile;
   }
 
   private async fetchMetafileBinary(
