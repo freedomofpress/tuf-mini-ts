@@ -232,16 +232,16 @@ export class TUFClient {
     // Spec 5.4.1
     const newTimestamp = await this.fetchMetafileJson(Roles.Timestamp);
 
-    try {
-      // Spec 5.4.2
-      await checkSignatures(
+    // Spec 5.4.2
+    if (
+      (await checkSignatures(
         keys,
         root.roles["timestamp"].keyids,
         newTimestamp.signed,
         newTimestamp.signatures,
         root.roles.timestamp.threshold,
-      );
-    } catch {
+      )) !== true
+    ) {
       throw new Error("Failed verifying timestamp role signature(s).");
     }
 
@@ -301,16 +301,16 @@ export class TUFClient {
 
     const newSnapshot = JSON.parse(Uint8ArrayToString(newSnapshotRaw));
 
-    try {
-      // Spec 5.5.3
-      await checkSignatures(
+    // Spec 5.5.3
+    if (
+      (await checkSignatures(
         keys,
         root.roles["snapshot"].keyids,
         newSnapshot.signed,
         newSnapshot.signatures,
         root.roles.snapshot.threshold,
-      );
-    } catch {
+      )) !== true
+    ) {
       throw new Error("Failed verifying snapshot role signature(s).");
     }
 
@@ -395,17 +395,17 @@ export class TUFClient {
 
     const newTargets = JSON.parse(Uint8ArrayToString(newTargetsRaw));
 
-    try {
-      // Spec 5.6.3
-      await checkSignatures(
+    // Spec 5.6.3
+    if (
+      (await checkSignatures(
         keys,
         root.roles["snapshot"].keyids,
         newTargets.signed,
         newTargets.signatures,
         root.roles.targets.threshold,
-      );
-    } catch (e) {
-      throw new Error(`Failed verifying targets role signature(s): ${e}`);
+      )) !== true
+    ) {
+      throw new Error(`Failed verifying targets role.`);
     }
 
     // 5.6.4
