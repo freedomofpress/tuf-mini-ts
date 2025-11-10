@@ -1,0 +1,15 @@
+# RSA key type tests - not supported (minimal client only supports ECDSA and Ed25519)
+test_keys.py::test_keytype_and_scheme[rsa-rsassa-pss-sha256]
+test_keys.py::test_keytype_and_scheme[rsa-rsa-pkcs1v15-sha256]
+
+# Delegation tests - not supported (minimal client doesn't support delegations)
+test_updater_delegation_graphs.py::test_graph_traversal
+test_updater_delegation_graphs.py::test_targetfile_search
+test_updater_delegation_graphs.py::test_delegation_not_in_snapshot
+test_quoting_issues.py::test_unusual_role_name
+
+# Static repository format - not needed for minimal browser client
+test_static_repositories.py::test_static_repository
+
+# Deprecated features - not needed for minimal client
+test_basic.py::test_deprecated_keyid_hash_algorithms

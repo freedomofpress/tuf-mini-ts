@@ -25,4 +25,5 @@ jobs:
       - uses: theupdateframework/tuf-conformance@v2
         with:
           entrypoint: dist/cli.js
+          xfail-file: .github/workflows/cli.js.xfails
 
