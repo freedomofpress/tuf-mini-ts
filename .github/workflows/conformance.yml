@@ -21,6 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: chmod +x dist/cli.js
+      - run: cp cli.js.xfails dist/
 
       - uses: theupdateframework/tuf-conformance@v2
         with:
