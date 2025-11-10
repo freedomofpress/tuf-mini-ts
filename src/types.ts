@@ -92,11 +92,6 @@ export interface Metafile {
   signatures: Signature[];
 }
 
-export interface Signature {
-  keyId: string;
-  sig: string;
-}
-
 export interface Root {
   version: number;
   expires: Date;
