@@ -1,0 +1,24 @@
+// Shared utilities for encoding/decoding raw bytes in browser storage
+import { Metafile } from "../types.js";
+
+export function encodeRawBytes(value: Uint8Array): string {
+  // Convert to string using Array.from to avoid spread operator argument limits
+  return btoa(Array.from(value, byte => String.fromCharCode(byte)).join(''));
+}
+
+export function decodeRawBytes(base64: string): Uint8Array {
+  return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+}
+
+export function isRawBytesWrapper(value: unknown): value is { __raw_bytes__: string } {
+  return value != null && typeof value === 'object' && '__raw_bytes__' in value && typeof (value as any).__raw_bytes__ === 'string';
+}
+
+export function decodeRawBytesWrapper(wrapper: { __raw_bytes__: string }): Metafile {
+  const bytes = decodeRawBytes(wrapper.__raw_bytes__);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+export function createRawBytesWrapper(value: Uint8Array): { __raw_bytes__: string } {
+  return { __raw_bytes__: encodeRawBytes(value) };
+}
