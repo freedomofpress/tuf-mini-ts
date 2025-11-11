@@ -1,21 +1,10 @@
-import { checkSignatures, getRoleKeys, loadKeys } from "./crypto.js";
+import { bufferEqual, checkSignatures, getRoleKeys, loadKeys } from "./crypto.js";
 import { FileBackend } from "./storage.js";
 import { ExtensionStorageBackend } from "./storage/browser.js";
 import { FSBackend } from "./storage/filesystem.js";
 import { LocalStorageBackend } from "./storage/localstorage.js";
 import { HashAlgorithms, Meta, Metafile, Roles, Root } from "./types.js";
 import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding.js";
-
-function byteEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return result === 0;
-}
 
 export class TUFClient {
   private repositoryUrl: string;
@@ -380,7 +369,7 @@ export class TUFClient {
       const computedHash = Uint8ArrayToHex(
         new Uint8Array(await crypto.subtle.digest(HashAlgorithms.SHA256, newSnapshotRaw))
       );
-      if (!byteEqual(snapshotHash, computedHash)) {
+      if (!bufferEqual(snapshotHash, computedHash)) {
         throw new Error("Snapshot hash does not match timestamp hash");
       }
     }
@@ -483,7 +472,7 @@ export class TUFClient {
       );
 
       const expectedHash = snapshot[`${Roles.Targets}.json`].hashes?.sha256;
-      if (!expectedHash || !byteEqual(expectedHash, newTargetsRaw_sha256)) {
+      if (!expectedHash || !bufferEqual(expectedHash, newTargetsRaw_sha256)) {
         throw new Error("Targets hash does not match snapshot hash.");
       }
       // console.log("[TUF]", "Hash verified");
@@ -600,7 +589,7 @@ export class TUFClient {
       ),
     );
 
-    if (!byteEqual(hashValue, hash_calculated)) {
+    if (!bufferEqual(hashValue, hash_calculated)) {
       throw new Error(
         `${name} ${cryptoAlgo} hash does not match the value in the targets role.`,
       );
