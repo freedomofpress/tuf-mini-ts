@@ -190,6 +190,7 @@ export class TUFClient {
     }
 
     let root = await this.loadRoot(rootJson as Metafile);
+    const oldRoot = root;
     let newroot;
     let newrootJson;
 
@@ -237,6 +238,30 @@ export class TUFClient {
     if (root.expires <= frozenTimestamp) {
       // By spec 5.3.10
       throw new Error("Freeze attack on the root metafile.");
+    }
+
+    // Fast-forward recovery: if timestamp or snapshot role keys changed, delete cached metadata
+    // This allows recovery from fast-forward attacks after key rotation
+    if (root.version > oldRoot.version) {
+      const timestampKeysChanged = JSON.stringify(root.roles.timestamp.keyids.sort()) !==
+        JSON.stringify(oldRoot.roles.timestamp.keyids.sort());
+      const snapshotKeysChanged = JSON.stringify(root.roles.snapshot.keyids.sort()) !==
+        JSON.stringify(oldRoot.roles.snapshot.keyids.sort());
+      const targetsKeysChanged = JSON.stringify(root.roles.targets.keyids.sort()) !==
+        JSON.stringify(oldRoot.roles.targets.keyids.sort());
+
+      if (timestampKeysChanged) {
+        await this.backend.delete(this.getCacheKey(Roles.Timestamp));
+        await this.backend.delete(this.getCacheKey(Roles.Snapshot));
+        await this.backend.delete(this.getCacheKey(Roles.Targets));
+      }
+      if (snapshotKeysChanged) {
+        await this.backend.delete(this.getCacheKey(Roles.Snapshot));
+        await this.backend.delete(this.getCacheKey(Roles.Targets));
+      }
+      if (targetsKeysChanged) {
+        await this.backend.delete(this.getCacheKey(Roles.Targets));
+      }
     }
 
     // TODO SECURITY ALERT: We are skipping 5.3.11, let's just load the keys for now
