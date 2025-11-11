@@ -232,10 +232,10 @@ export class TUFClient {
 
       // First check that is properly signed by the previous root
       newroot = await this.loadRoot(newrootJson, root);
-      // As per 5.3.5 of the SPEC
-      if (newroot.version <= root.version) {
+      // Spec 5.3.5: Check for rollback attack - version must be exactly N+1
+      if (newroot.version !== root.version + 1) {
         throw new Error(
-          "New root version is either the same or lesser than the current one. Probable rollback attack.",
+          `Root version must be exactly ${root.version + 1}, got ${newroot.version}. Probable rollback attack.`,
         );
       }
 
