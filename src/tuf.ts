@@ -172,6 +172,15 @@ export class TUFClient {
     ) {
       try {
         newrootJson = await this.fetchMetafileJson(Roles.Root, new_version);
+
+        if (newrootJson.signed?._type !== Roles.Root) {
+          throw new Error("Incorrect metadata type for root.");
+        }
+
+        if (newrootJson.signed?.version !== new_version) {
+          // Mismatch between URL version (new_version) and signed.version
+          throw new Error("Root version mismatch between URL and metadata.");
+        }
       } catch {
         // Fetching failed and we assume there is no new version
         // Maybe we should explicitly check for 404 failures
@@ -191,6 +200,7 @@ export class TUFClient {
             "New root version is either the same or lesser than the current one. Probable rollback attack.",
           );
         }
+
         // Then check it is properly signed by itself as per 5.3.4 of the SPEC
         newroot = await this.loadRoot(newrootJson);
         root = newroot;
@@ -232,6 +242,10 @@ export class TUFClient {
 
     // Spec 5.4.1
     const newTimestamp = await this.fetchMetafileJson(Roles.Timestamp);
+
+    if (newTimestamp.signed?._type !== Roles.Timestamp) {
+      throw new Error("Incorrect metadata type for timestamp.");
+    }
 
     // Spec 5.4.2
     if (
@@ -295,12 +309,30 @@ export class TUFClient {
       newSnapshotRaw = await this.fetchMetafileBinary(Roles.Snapshot, -1);
     }
 
-    // As mentioned we are skipping 5.5.2 because sigstore timestamp does not have hashes
-    // Even if they add it, we would be doing a check less, but we won't break
-    // TODO: to add the check we should port info from timestamp and we are not doing that now
-    // we are downloading it in binary mode and convert for this purpose though
+    const timestamp = await this.getFromCache(Roles.Timestamp);
+    const expectedHash =
+      timestamp?.signed?.meta?.["snapshot.json"]?.hashes?.sha256;
+
+    if (expectedHash) {
+      const calculated = Uint8ArrayToHex(
+        new Uint8Array(
+          await crypto.subtle.digest(
+            HashAlgorithms.SHA256,
+            new Uint8Array(newSnapshotRaw),
+          ),
+        ),
+      );
+
+      if (calculated !== expectedHash) {
+        throw new Error("Snapshot hash does not match timestamp hash.");
+      }
+    }
 
     const newSnapshot = JSON.parse(Uint8ArrayToString(newSnapshotRaw));
+
+    if (newSnapshot.signed?._type !== Roles.Snapshot) {
+      throw new Error("Incorrect metadata type for snapshot.");
+    }
 
     // Spec 5.5.3
     if (
@@ -380,7 +412,10 @@ export class TUFClient {
     if (snapshot[`${Roles.Targets}.json`].hashes?.sha256) {
       const newTargetsRaw_sha256 = Uint8ArrayToHex(
         new Uint8Array(
-          await crypto.subtle.digest(HashAlgorithms.SHA256, newTargetsRaw),
+          await crypto.subtle.digest(
+            HashAlgorithms.SHA256,
+            new Uint8Array(newTargetsRaw),
+          ),
         ),
       );
 
@@ -395,6 +430,10 @@ export class TUFClient {
     }
 
     const newTargets = JSON.parse(Uint8ArrayToString(newTargetsRaw));
+
+    if (newTargets.signed?._type !== Roles.Targets) {
+      throw new Error("Incorrect metadata type for targets.");
+    }
 
     // Spec 5.6.3
     if (
@@ -467,7 +506,10 @@ export class TUFClient {
       );
       const sha256_calculated = Uint8ArrayToHex(
         new Uint8Array(
-          await crypto.subtle.digest(HashAlgorithms.SHA256, raw_file),
+          await crypto.subtle.digest(
+            HashAlgorithms.SHA256,
+            new Uint8Array(raw_file),
+          ),
         ),
       );
       // TODO replace with crypto.bufferEqual
