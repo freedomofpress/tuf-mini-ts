@@ -170,7 +170,12 @@ export class TUFClient {
       new_version < Number.MAX_SAFE_INTEGER;
       new_version++
     ) {
+      try {
         newrootJson = await this.fetchMetafileJson(Roles.Root, new_version);
+      } catch (e) {
+        // We always attempt to fetch +1 so we always hit a 404 eventually
+        break;
+      }
 
       if (newrootJson.signed?._type !== Roles.Root) {
         throw new Error("Incorrect metadata type for root.");
