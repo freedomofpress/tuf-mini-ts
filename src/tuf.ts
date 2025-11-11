@@ -71,12 +71,39 @@ export class TUFClient {
     return response;
   }
 
+  private validateMetadata(metadata: Metafile): void {
+    const seenKeyIds = new Set<string>();
+    for (const sig of metadata.signatures) {
+      if (seenKeyIds.has(sig.keyid)) {
+        throw new Error(`Duplicate signature found for keyid: ${sig.keyid}`);
+      }
+      seenKeyIds.add(sig.keyid);
+    }
+
+    const specVersion = metadata.signed.spec_version;
+    if (!specVersion) {
+      throw new Error("spec_version is required");
+    }
+    const parts = specVersion.split(".");
+    if (parts.length < 2 || parts.length > 3) {
+      throw new Error(`Invalid spec_version format: ${specVersion}`);
+    }
+    if (!parts.every(p => /^\d+$/.test(p))) {
+      throw new Error(`spec_version parts must be numeric: ${specVersion}`);
+    }
+    if (parts[0] !== "1") {
+      throw new Error(`Unsupported spec_version major version: ${parts[0]} (expected 1)`);
+    }
+  }
+
   private async fetchMetafileJson(
     role: string,
     version: number | string = -1,
   ): Promise<Metafile> {
     const response = await this.fetchMetafileBase(role, version);
-    return (await response.json()) as Metafile;
+    const metadata = (await response.json()) as Metafile;
+    this.validateMetadata(metadata);
+    return metadata;
   }
 
   private async fetchMetafileBinary(
@@ -90,7 +117,9 @@ export class TUFClient {
 
   private bootstrapRoot(file: string): Promise<Metafile> {
     try {
-      return JSON.parse(file);
+      const metadata = JSON.parse(file);
+      this.validateMetadata(metadata);
+      return metadata;
     } catch (error) {
       throw new Error(`Failed to load the JSON file:  ${error}`);
     }
