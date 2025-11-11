@@ -170,46 +170,30 @@ export class TUFClient {
       new_version < Number.MAX_SAFE_INTEGER;
       new_version++
     ) {
-      try {
         newrootJson = await this.fetchMetafileJson(Roles.Root, new_version);
 
-        if (newrootJson.signed?._type !== Roles.Root) {
-          throw new Error("Incorrect metadata type for root.");
-        }
-
-        if (newrootJson.signed?.version !== new_version) {
-          // Mismatch between URL version (new_version) and signed.version
-          throw new Error("Root version mismatch between URL and metadata.");
-        }
-      } catch {
-        // Fetching failed and we assume there is no new version
-        // Maybe we should explicitly check for 404 failures
-        // Cause a network failure may be an attempt to a freeze attack,
-        // We will check expiration anyway, but surely this can be done better
-        break;
+      if (newrootJson.signed?._type !== Roles.Root) {
+        throw new Error("Incorrect metadata type for root.");
       }
 
-      //console.log("Fetched version ", new_version);
+      if (newrootJson.signed?.version !== new_version) {
+        // Mismatch between URL version (new_version) and signed.version
+        throw new Error("Root version mismatch between URL and metadata.");
+      }
 
-      try {
-        // First check that is properly signed by the previous root
-        newroot = await this.loadRoot(newrootJson, root);
-        // As per 5.3.5 of the SPEC
-        if (newroot.version <= root.version) {
-          throw new Error(
-            "New root version is either the same or lesser than the current one. Probable rollback attack.",
-          );
-        }
-
-        // Then check it is properly signed by itself as per 5.3.4 of the SPEC
-        newroot = await this.loadRoot(newrootJson);
-        root = newroot;
-      } catch (e) {
-        console.log(e);
+      // First check that is properly signed by the previous root
+      newroot = await this.loadRoot(newrootJson, root);
+      // As per 5.3.5 of the SPEC
+      if (newroot.version <= root.version) {
         throw new Error(
-          "Error loading a new root. Something is *definitely wrong*.",
+          "New root version is either the same or lesser than the current one. Probable rollback attack.",
         );
       }
+
+      // Then check it is properly signed by itself as per 5.3.4 of the SPEC
+      newroot = await this.loadRoot(newrootJson);
+      root = newroot;
+
       // By spec 5.3.8, we should update the cache now
       await this.setInCache(Roles.Root, newrootJson);
     }
