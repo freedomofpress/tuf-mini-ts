@@ -374,22 +374,14 @@ export class TUFClient {
       newSnapshotRaw = await this.fetchMetafileBinary(Roles.Snapshot, -1);
     }
 
-    const timestamp = await this.getFromCache(Roles.Timestamp);
-    const expectedHash =
-      timestamp?.signed?.meta?.["snapshot.json"]?.hashes?.sha256;
-
-    if (expectedHash) {
-      const calculated = Uint8ArrayToHex(
-        new Uint8Array(
-          await crypto.subtle.digest(
-            HashAlgorithms.SHA256,
-            new Uint8Array(newSnapshotRaw),
-          ),
-        ),
+    // Spec 5.5.2: Verify snapshot hash if present in timestamp
+    const snapshotHash = timestampMeta.signed.meta["snapshot.json"].hashes?.sha256;
+    if (snapshotHash) {
+      const computedHash = Uint8ArrayToHex(
+        new Uint8Array(await crypto.subtle.digest(HashAlgorithms.SHA256, newSnapshotRaw))
       );
-
-      if (calculated !== expectedHash) {
-        throw new Error("Snapshot hash does not match timestamp hash.");
+      if (!byteEqual(snapshotHash, computedHash)) {
+        throw new Error("Snapshot hash does not match timestamp hash");
       }
     }
 
