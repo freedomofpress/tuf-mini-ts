@@ -271,7 +271,7 @@ export class TUFClient {
   private async updateTimestamp(
     root: Root,
     frozenTimestamp: Date,
-  ): Promise<number> {
+  ): Promise<Metafile | null> {
     // Funny question about 5.5.2, why are not hashes in the timestamp?
     // https://github.com/sigstore/root-signing/issues/1388
 
@@ -320,9 +320,8 @@ export class TUFClient {
         );
       }
       if (newTimestamp.signed.version == cachedTimestamp.signed.version) {
-        // If equal, there is no update and we can just skip here
-        // Return false, there are no updates
-        return -1;
+        // If equal, there is no update - return null to signal no update needed
+        return null;
       }
       // 5.4.3.2
       if (
@@ -340,14 +339,15 @@ export class TUFClient {
     }
 
     await this.backend.writeRaw(this.getCacheKey(Roles.Timestamp), newTimestampRaw);
-    return newTimestamp.signed.meta["snapshot.json"].version;
+    return newTimestamp;
   }
 
   private async updateSnapshot(
     root: Root,
     frozenTimestamp: Date,
-    version?: number,
+    timestampMeta: Metafile,
   ): Promise<Meta> {
+    const version = timestampMeta.signed.meta["snapshot.json"].version;
     const keys = getRoleKeys(root.keys, root.roles.snapshot.keyids);
     const cachedSnapshot = await this.getFromCache(Roles.Snapshot);
 
@@ -598,19 +598,20 @@ export class TUFClient {
     // Spec 5.1
     const frozenTimestamp = new Date();
     const root: Root = await this.updateRoot(frozenTimestamp);
-    const snapshotVersion: number = await this.updateTimestamp(
+    const timestampMeta = await this.updateTimestamp(
       root,
       frozenTimestamp,
     );
 
-    // As per spec 5.4.3.1 we shall abort the whole updating if a new snapshot is not available
-    if (snapshotVersion < 0) {
+    // If timestamp hasn't changed, no need to update snapshot/targets
+    if (timestampMeta === null) {
       return;
     }
+
     const snapshot = await this.updateSnapshot(
       root,
       frozenTimestamp,
-      snapshotVersion,
+      timestampMeta,
     );
     await this.updateTargets(root, frozenTimestamp, snapshot);
   }
