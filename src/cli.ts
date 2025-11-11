@@ -59,7 +59,7 @@ async function main() {
 
       const client = new TUFClient(
         metadataUrl,
-        JSON.stringify(await backend.read("root.json")),
+        JSON.stringify(await backend.read(`${metadataDir}/root.json`)),
         metadataDir,
       );
       await client.updateTUF();
@@ -72,13 +72,18 @@ async function main() {
         process.exit(1);
       }
 
-      const client = new TUFClient(metadataUrl, "root.json", metadataDir);
+      const client = new TUFClient(
+        metadataUrl,
+        JSON.stringify(await backend.read(`${metadataDir}/root.json`)),
+        metadataDir,
+        targetBaseUrl
+      );
       await client.updateTUF();
       const target = await client.getTarget(targetName);
 
       await fs.mkdir(targetDir, { recursive: true });
       const outPath = path.join(targetDir, path.basename(targetName));
-      await fs.writeFile(outPath, JSON.stringify(target, null, 2));
+      await fs.writeFile(outPath, target);
       process.exit(0);
     }
   } catch (err) {

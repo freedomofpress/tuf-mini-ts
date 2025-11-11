@@ -8,12 +8,14 @@ import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding.js";
 
 export class TUFClient {
   private repositoryUrl: string;
+  private targetBaseUrl: string;
   private startingRoot: string;
   private namespace: string;
   private backend: FileBackend;
 
-  constructor(repositoryUrl: string, startingRoot: string, namespace: string) {
+  constructor(repositoryUrl: string, startingRoot: string, namespace: string, targetBaseUrl?: string) {
     this.repositoryUrl = repositoryUrl;
+    this.targetBaseUrl = targetBaseUrl || repositoryUrl;
     this.startingRoot = startingRoot;
     this.namespace = namespace;
 
@@ -546,9 +548,7 @@ export class TUFClient {
     return filenames;
   }
 
-  private async fetchTarget(name: string): Promise<unknown> {
-    const cachedTarget = await this.getFromCache(name);
-
+  private async fetchTarget(name: string): Promise<Uint8Array> {
     const cachedTargets = await this.getFromCache(Roles.Targets);
 
     if (cachedTargets === undefined) {
@@ -561,37 +561,52 @@ export class TUFClient {
       throw new Error(`${name} not present in the targets role.`);
     }
 
-    if (!cachedTarget) {
-      // Both sha256 and sha512 works for downloading the file (and verifying of course)
-      const sha256 = cachedTargets.signed.targets[name].hashes.sha256;
+    // Get available hashes and pick one we support
+    const targetHashes = cachedTargets.signed.targets[name].hashes;
+    let hashValue: string;
+    let cryptoAlgo: string;
 
-      const raw_file = await this.fetchMetafileBinary(
-        name,
-        `targets/${sha256}`,
-        true,
-      );
-      const sha256_calculated = Uint8ArrayToHex(
-        new Uint8Array(
-          await crypto.subtle.digest(
-            HashAlgorithms.SHA256,
-            new Uint8Array(raw_file),
-          ),
-        ),
-      );
-      // TODO replace with crypto.bufferEqual
-
-      if (sha256 !== sha256_calculated) {
-        throw new Error(
-          `${name} hash does not match the value in the targets role.`,
-        );
-      }
-
-      const verifiedTarget = JSON.parse(Uint8ArrayToString(raw_file));
-      await this.setInCache(name, verifiedTarget);
-      return verifiedTarget;
+    if (targetHashes.sha256) {
+      hashValue = targetHashes.sha256;
+      cryptoAlgo = HashAlgorithms.SHA256;
+    } else if (targetHashes.sha512) {
+      hashValue = targetHashes.sha512;
+      cryptoAlgo = HashAlgorithms.SHA512;
     } else {
-      return cachedTarget;
+      throw new Error(
+        `No supported hash algorithm found for ${name}. Available: ${Object.keys(targetHashes).join(", ")}`,
+      );
     }
+
+    // For consistent snapshots, construct URL as: targets/dir/subdir/HASH.filename
+    // Extract directory and filename parts
+    const lastSlash = name.lastIndexOf('/');
+    const targetUrl = lastSlash === -1
+      ? `${this.targetBaseUrl}${hashValue}.${name}` // No directory: HASH.filename
+      : `${this.targetBaseUrl}${name.substring(0, lastSlash + 1)}${hashValue}.${name.substring(lastSlash + 1)}`; // dir/HASH.filename
+
+    console.log("[TUF]", "Fetching target", targetUrl);
+
+    const response = await fetch(targetUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch target: ${response.status} ${response.statusText}`,
+      );
+    }
+    const raw_file = new Uint8Array(await response.arrayBuffer());
+    const hash_calculated = Uint8ArrayToHex(
+      new Uint8Array(
+        await crypto.subtle.digest(cryptoAlgo, raw_file),
+      ),
+    );
+
+    if (hashValue !== hash_calculated) {
+      throw new Error(
+        `${name} ${cryptoAlgo} hash does not match the value in the targets role.`,
+      );
+    }
+
+    return raw_file;
   }
 
   async updateTUF() {
@@ -616,15 +631,7 @@ export class TUFClient {
     await this.updateTargets(root, frozenTimestamp, snapshot);
   }
 
-  async getTarget(name: string): Promise<unknown> {
-    await this.fetchTarget(name);
-
-    const namespacedKey = this.getCacheKey(name);
-    const result = await browser.storage.local.get(namespacedKey);
-
-    if (!result) {
-      throw new Error(`${name} not available!`);
-    }
-    return result[namespacedKey];
+  async getTarget(name: string): Promise<Uint8Array> {
+    return await this.fetchTarget(name);
   }
 }
