@@ -202,17 +202,18 @@ export class TUFClient {
       try {
         newrootJson = await this.fetchMetafileJson(Roles.Root, new_version);
       } catch (e) {
-        // We always attempt to fetch +1 so we always hit a 404 eventually
-        break;
+        if (e instanceof Error && e.message.includes("Failed to fetch")) {
+          break;
+        }
+        throw e;
+      }
+
+      if (newrootJson.signed.version !== new_version) {
+        throw new Error(`Version mismatch: URL version ${new_version} but file contains version ${newrootJson.signed.version}`);
       }
 
       if (newrootJson.signed?._type !== Roles.Root) {
         throw new Error("Incorrect metadata type for root.");
-      }
-
-      if (newrootJson.signed?.version !== new_version) {
-        // Mismatch between URL version (new_version) and signed.version
-        throw new Error("Root version mismatch between URL and metadata.");
       }
 
       // First check that is properly signed by the previous root
@@ -365,10 +366,10 @@ export class TUFClient {
       throw new Error("Failed verifying snapshot role signature(s).");
     }
 
-    // 5.5.4
+    // 5.5.4 - Validate version matches (both timestamp and URL if consistent_snapshot)
     if (newSnapshot.signed.version !== version) {
       throw new Error(
-        "Snapshot file version does not match timestamp version.",
+        `Snapshot version mismatch: URL version ${version} but file contains version ${newSnapshot.signed.version}`,
       );
     }
 
@@ -466,7 +467,15 @@ export class TUFClient {
       throw new Error(`Failed verifying targets role.`);
     }
 
-    // 5.6.4
+    // 5.6.4 - Check version matches snapshot (and URL if consistent_snapshot)
+    const expectedVersion = snapshot[`${Roles.Targets}.json`].version;
+    if (newTargets.signed.version !== expectedVersion) {
+      throw new Error(
+        `Targets version mismatch: URL version ${expectedVersion} but file contains version ${newTargets.signed.version}`,
+      );
+    }
+
+    // 5.6.5 - Check for rollback attack
     if (
       cachedTargets !== undefined &&
       newTargets.signed.version < cachedTargets.signed.version
@@ -476,12 +485,12 @@ export class TUFClient {
       );
     }
 
-    // 5.6.5
+    // 5.6.6
     if (new Date(newTargets.signed.expires) <= frozenTimestamp) {
       throw new Error("Freeze attack on the targets metafile.");
     }
 
-    // 5.6.6
+    // 5.6.7
     await this.setInCache(Roles.Targets, newTargets);
   }
 
