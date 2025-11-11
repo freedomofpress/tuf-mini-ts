@@ -1,7 +1,7 @@
 {
   "name": "tuf-mini-ts",
   "version": "0.1",
-  "description": "A Sigsum proof verifier for the browser.",
+  "description": "A minimal TUF client for both node and the browser.",
   "main": "dist/cli.js",
   "type": "module",
   "scripts": {
