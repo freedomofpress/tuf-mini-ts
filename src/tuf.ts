@@ -6,6 +6,17 @@ import { LocalStorageBackend } from "./storage/localstorage.js";
 import { HashAlgorithms, Meta, Metafile, Roles, Root } from "./types.js";
 import { Uint8ArrayToHex, Uint8ArrayToString } from "./utils/encoding.js";
 
+function byteEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 export class TUFClient {
   private repositoryUrl: string;
   private targetBaseUrl: string;
@@ -479,11 +490,8 @@ export class TUFClient {
         ),
       );
 
-      // TODO replace with crypto.bufferEqual
-      if (
-        snapshot[`${Roles.Targets}.json`].hashes?.sha256 !==
-        newTargetsRaw_sha256
-      ) {
+      const expectedHash = snapshot[`${Roles.Targets}.json`].hashes?.sha256;
+      if (!expectedHash || !byteEqual(expectedHash, newTargetsRaw_sha256)) {
         throw new Error("Targets hash does not match snapshot hash.");
       }
       // console.log("[TUF]", "Hash verified");
@@ -600,7 +608,7 @@ export class TUFClient {
       ),
     );
 
-    if (hashValue !== hash_calculated) {
+    if (!byteEqual(hashValue, hash_calculated)) {
       throw new Error(
         `${name} ${cryptoAlgo} hash does not match the value in the targets role.`,
       );
