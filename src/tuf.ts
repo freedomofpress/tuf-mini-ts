@@ -259,11 +259,18 @@ export class TUFClient {
 
     const cachedTimestamp = await this.getFromCache(Roles.Timestamp);
 
-    // Spec 5.4.1
-    const newTimestamp = await this.fetchMetafileJson(Roles.Timestamp);
+    // Spec 5.4.1 - fetch raw bytes to preserve exact serialization
+    const newTimestampRaw = await this.fetchMetafileBinary(Roles.Timestamp, -1);
+    const newTimestamp = JSON.parse(Uint8ArrayToString(newTimestampRaw));
+    this.validateMetadata(newTimestamp);
 
-    if (newTimestamp.signed?._type !== Roles.Timestamp) {
-      throw new Error("Incorrect metadata type for timestamp.");
+    if (newTimestamp.signed._type !== Roles.Timestamp) {
+      throw new Error(`Invalid metadata type: expected ${Roles.Timestamp}, got ${newTimestamp.signed._type}`);
+    }
+
+    // Validate required meta field
+    if (!newTimestamp.signed.meta || !newTimestamp.signed.meta["snapshot.json"]) {
+      throw new Error("Timestamp metadata missing required meta['snapshot.json']");
     }
 
     // Spec 5.4.2
@@ -307,7 +314,7 @@ export class TUFClient {
       throw new Error("Freeze attack on the timestamp metafile.");
     }
 
-    await this.setInCache(Roles.Timestamp, newTimestamp);
+    await this.backend.writeRaw(this.getCacheKey(Roles.Timestamp), newTimestampRaw);
     return newTimestamp.signed.meta["snapshot.json"].version;
   }
 
@@ -348,9 +355,15 @@ export class TUFClient {
     }
 
     const newSnapshot = JSON.parse(Uint8ArrayToString(newSnapshotRaw));
+    this.validateMetadata(newSnapshot);
 
-    if (newSnapshot.signed?._type !== Roles.Snapshot) {
-      throw new Error("Incorrect metadata type for snapshot.");
+    if (newSnapshot.signed._type !== Roles.Snapshot) {
+      throw new Error(`Invalid metadata type: expected ${Roles.Snapshot}, got ${newSnapshot.signed._type}`);
+    }
+
+    // Validate required meta field
+    if (!newSnapshot.signed.meta || !newSnapshot.signed.meta["targets.json"]) {
+      throw new Error("Snapshot metadata missing required meta['targets.json']");
     }
 
     // Spec 5.5.3
@@ -397,8 +410,8 @@ export class TUFClient {
       throw new Error("Freeze attack on the snapshot metafile.");
     }
 
-    // 5.5.7
-    await this.setInCache(Roles.Snapshot, newSnapshot);
+    // 5.5.7 - Store raw bytes to preserve exact serialization
+    await this.backend.writeRaw(this.getCacheKey(Roles.Snapshot), newSnapshotRaw);
 
     // If we reach here, we expect updates, otherwise we would have aborted in the timestamp phase.
     return newSnapshot.signed.meta;
@@ -449,9 +462,10 @@ export class TUFClient {
     }
 
     const newTargets = JSON.parse(Uint8ArrayToString(newTargetsRaw));
+    this.validateMetadata(newTargets);
 
-    if (newTargets.signed?._type !== Roles.Targets) {
-      throw new Error("Incorrect metadata type for targets.");
+    if (newTargets.signed._type !== Roles.Targets) {
+      throw new Error(`Invalid metadata type: expected ${Roles.Targets}, got ${newTargets.signed._type}`);
     }
 
     // Spec 5.6.3
@@ -490,8 +504,8 @@ export class TUFClient {
       throw new Error("Freeze attack on the targets metafile.");
     }
 
-    // 5.6.7
-    await this.setInCache(Roles.Targets, newTargets);
+    // 5.6.7 - Store raw bytes to preserve exact serialization
+    await this.backend.writeRaw(this.getCacheKey(Roles.Targets), newTargetsRaw);
   }
 
   public async listSignedTargets() {
