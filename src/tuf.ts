@@ -60,7 +60,7 @@ export class TUFClient {
       url = `${this.repositoryUrl}${version}.${role}`;
     }
 
-    console.log("[TUF]", "Fetching", url);
+    // console.log("[TUF]", "Fetching", url);
 
     const response = await fetch(url);
 
@@ -186,7 +186,7 @@ export class TUFClient {
     // Is this the first time we are running the update meaning we have no cached file?
     if (!rootJson) {
       // Then load the hardcoded startup root
-      console.log("[TUF]", "Starting from hardcoded root");
+      // console.log("[TUF]", "Starting from hardcoded root");
       // Spec 5.2
       rootJson = await this.bootstrapRoot(this.startingRoot);
     }
@@ -242,8 +242,8 @@ export class TUFClient {
       throw new Error("Freeze attack on the root metafile.");
     }
 
-    // Fast-forward recovery: if timestamp or snapshot role keys changed, delete cached metadata
-    // This allows recovery from fast-forward attacks after key rotation
+    // Fast-forward recovery: If timestamp or snapshot role keys changed, delete cached metadata.
+    // This allows recovery from fast-forward attacks after key rotation.
     if (root.version > oldRoot.version) {
       const timestampKeysChanged = JSON.stringify(root.roles.timestamp.keyids.sort()) !==
         JSON.stringify(oldRoot.roles.timestamp.keyids.sort());
@@ -266,7 +266,6 @@ export class TUFClient {
       }
     }
 
-    // TODO SECURITY ALERT: We are skipping 5.3.11, let's just load the keys for now
     return root;
   }
 
@@ -274,8 +273,10 @@ export class TUFClient {
     root: Root,
     frozenTimestamp: Date,
   ): Promise<Metafile | null> {
-    // Funny question about 5.5.2, why are not hashes in the timestamp?
-    // https://github.com/sigstore/root-signing/issues/1388
+    // Note: TUF spec 5.5.2 allows optional hashes in timestamp metadata.
+    // Sigstore omits them for simpler maintenance and smaller metadata.
+    // The "consistent snapshot" feature (version checking) provides sufficient protection against mix-and-match attacks.
+    // See: https://github.com/sigstore/root-signing/issues/1388
 
     // Always remember to select only the keys delegated to a specific role
     const keys = getRoleKeys(root.keys, root.roles.timestamp.keyids);
@@ -286,7 +287,7 @@ export class TUFClient {
 
     const cachedTimestamp = await this.getFromCache(Roles.Timestamp);
 
-    // Spec 5.4.1 - fetch raw bytes to preserve exact serialization
+    // Spec 5.4.1 - Fetch raw bytes to preserve exact serialization
     const newTimestampRaw = await this.fetchMetafileBinary(Roles.Timestamp, -1);
     const newTimestamp = JSON.parse(Uint8ArrayToString(newTimestampRaw));
     this.validateMetadata(newTimestamp);
@@ -485,7 +486,7 @@ export class TUFClient {
       ) {
         throw new Error("Targets hash does not match snapshot hash.");
       }
-      console.log("[TUF]", "Hash verified");
+      // console.log("[TUF]", "Hash verified");
     }
 
     const newTargets = JSON.parse(Uint8ArrayToString(newTargetsRaw));
@@ -561,7 +562,7 @@ export class TUFClient {
       throw new Error(`${name} not present in the targets role.`);
     }
 
-    // Get available hashes and pick one we support
+    // Get available hashes and select one we support (prefer SHA256 over SHA512)
     const targetHashes = cachedTargets.signed.targets[name].hashes;
     let hashValue: string;
     let cryptoAlgo: string;
@@ -578,14 +579,13 @@ export class TUFClient {
       );
     }
 
-    // For consistent snapshots, construct URL as: targets/dir/subdir/HASH.filename
-    // Extract directory and filename parts
+    // For consistent snapshots, construct URL preserving directory structure: targets/dir/subdir/HASH.filename
     const lastSlash = name.lastIndexOf('/');
     const targetUrl = lastSlash === -1
       ? `${this.targetBaseUrl}${hashValue}.${name}` // No directory: HASH.filename
       : `${this.targetBaseUrl}${name.substring(0, lastSlash + 1)}${hashValue}.${name.substring(lastSlash + 1)}`; // dir/HASH.filename
 
-    console.log("[TUF]", "Fetching target", targetUrl);
+    // console.log("[TUF]", "Fetching target", targetUrl);
 
     const response = await fetch(targetUrl);
     if (!response.ok) {

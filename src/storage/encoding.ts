@@ -2,7 +2,7 @@
 import { Metafile } from "../types.js";
 
 export function encodeRawBytes(value: Uint8Array): string {
-  // Convert to string using Array.from to avoid spread operator argument limits
+  // Use Array.from to avoid spread operator argument limits with large arrays
   return btoa(Array.from(value, byte => String.fromCharCode(byte)).join(''));
 }
 
