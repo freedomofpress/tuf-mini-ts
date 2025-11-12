@@ -1,0 +1,67 @@
+# Version mismatch checks - not implemented on chore branch
+test_url_and_metadata_version_mismatch[root]
+
+# Metadata type validation - not implemented on chore branch
+test_incorrect_metadata_type
+
+# Hash verification - not implemented on chore branch
+test_snapshot_hash_mismatch
+test_metadata_bytes_match
+
+# File download - not implemented on chore branch
+test_client_downloads_expected_file
+test_client_downloads_expected_file_in_sub_dir
+test_repository_substitutes_target_file
+test_multiple_changes_to_target
+test_download_with_hash_algorithms[hashes0]
+test_download_with_hash_algorithms[hashes1]
+test_download_with_hash_algorithms[hashes2]
+
+# Duplicate signature keyids - not implemented on chore branch
+test_duplicate_sig_keyids
+
+# Fast-forward recovery - not implemented on chore branch (spec 5.3.11)
+test_targets_fast_forward_recovery
+test_new_snapshot_fast_forward_recovery
+test_new_timestamp_fast_forward_recovery
+
+# Static repository tests - not fully supported
+test_static_repository[sigstore-root-signing]
+
+# Target file search - not implemented on chore branch
+test_targetfile_search[no delegations]
+
+# RSA key type tests - not supported (minimal client only supports ECDSA)
+test_keytype_and_scheme[rsa/rsassa-pss-sha256]
+test_keytype_and_scheme[rsa/rsa-pkcs1v15-sha256]
+
+# Ed25519 key type tests - not implemented yet
+test_keytype_and_scheme[ed25519/ed25519]
+
+# Delegation tests - not supported (minimal client doesn't support delegations)
+test_graph_traversal[basic-delegation]
+test_graph_traversal[single-level-delegations]
+test_graph_traversal[two-level-delegations]
+test_graph_traversal[two-level-test-DFS-order-of-traversal]
+test_graph_traversal[three-level-delegation-test-DFS-order-of-traversal]
+test_graph_traversal[two-level-terminating-ignores-all-but-roles-descendants]
+test_graph_traversal[three-level-terminating-ignores-all-but-roles-descendants]
+test_graph_traversal[two-level-ignores-all-branches-not-matching-paths]
+test_graph_traversal[three-level-ignores-all-branches-not-matching-paths]
+test_graph_traversal[cyclic-graph]
+test_graph_traversal[two-roles-delegating-to-a-third]
+test_graph_traversal[two-roles-delegating-to-a-third-different-paths]
+test_targetfile_search[targetpath matches wildcard]
+test_targetfile_search[targetpath with separators x]
+test_targetfile_search[targetpath with separators y]
+test_targetfile_search[targetpath is not delegated by all roles in the chain]
+test_unusual_role_name[?]
+test_unusual_role_name[#]
+test_unusual_role_name[/delegatedrole]
+test_unusual_role_name[../delegatedrole]
+
+# Static repository format - not needed for minimal browser client
+test_static_repository[tuf-on-ci-0.11]
+
+# Artifact caching - not implemented (targets are not cached after download)
+test_artifact_cache
