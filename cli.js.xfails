@@ -1,9 +1,6 @@
-# RSA key type tests - not supported (minimal client only supports ECDSA)
+# RSA key type tests - not supported (minimal client only supports ECDSA and Ed25519)
 test_keytype_and_scheme[rsa/rsassa-pss-sha256]
 test_keytype_and_scheme[rsa/rsa-pkcs1v15-sha256]
-
-# Ed25519 key type tests - not implemented yet
-test_keytype_and_scheme[ed25519/ed25519]
 
 # Delegation tests - not supported (minimal client doesn't support delegations)
 test_graph_traversal[basic-delegation]

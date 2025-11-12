@@ -204,10 +204,8 @@ export async function verifySignature(
 
     return await crypto.subtle.verify(options, key, raw_signature, signed);
   } else if (key.algorithm.name === KeyTypes.Ed25519) {
-    // No need to specify hash in this case, the crypto API does not take it as input for this key type
-    throw new Error(
-      "This is untested but could likely work, but not for prod usage :)",
-    );
+    // Ed25519 has built-in SHA-512 hashing, no hash parameter needed
+    return await crypto.subtle.verify(options, key, sig, signed);
   } else if (key.algorithm.name === KeyTypes.RSA) {
     throw new Error("RSA could work, if only someone coded the support :)");
   } else {
