@@ -1,6 +1,6 @@
 # Minimal Browser-Compatible Implementation of TUF 
 
-[![Conformance](https://github.com/sachaservan/tuf-browser/actions/workflows/conformance.yml/badge.svg)](https://github.com/sachaservan/tuf-browser/actions/workflows/conformance.yml)
+[![Conformance](https://github.com/freedomofpress/tuf-browser/actions/workflows/conformance.yml/badge.svg)](https://github.com/sachaservan/tuf-browser/actions/workflows/conformance.yml)
 
 A minimal TypeScript implementation of [The Update Framework (TUF)](https://theupdateframework.io/) specification, optimized for browser compatibility.
 
