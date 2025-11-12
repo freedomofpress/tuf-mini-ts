@@ -1,36 +1,3 @@
-# Version mismatch checks - not implemented on chore branch
-test_url_and_metadata_version_mismatch[root]
-
-# Metadata type validation - not implemented on chore branch
-test_incorrect_metadata_type
-
-# Hash verification - not implemented on chore branch
-test_snapshot_hash_mismatch
-test_metadata_bytes_match
-
-# File download - not implemented on chore branch
-test_client_downloads_expected_file
-test_client_downloads_expected_file_in_sub_dir
-test_repository_substitutes_target_file
-test_multiple_changes_to_target
-test_download_with_hash_algorithms[hashes0]
-test_download_with_hash_algorithms[hashes1]
-test_download_with_hash_algorithms[hashes2]
-
-# Duplicate signature keyids - not implemented on chore branch
-test_duplicate_sig_keyids
-
-# Fast-forward recovery - not implemented on chore branch (spec 5.3.11)
-test_targets_fast_forward_recovery
-test_new_snapshot_fast_forward_recovery
-test_new_timestamp_fast_forward_recovery
-
-# Static repository tests - not fully supported
-test_static_repository[sigstore-root-signing]
-
-# Target file search - not implemented on chore branch
-test_targetfile_search[no delegations]
-
 # RSA key type tests - not supported (minimal client only supports ECDSA)
 test_keytype_and_scheme[rsa/rsassa-pss-sha256]
 test_keytype_and_scheme[rsa/rsa-pkcs1v15-sha256]

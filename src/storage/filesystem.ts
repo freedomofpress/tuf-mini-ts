@@ -17,7 +17,17 @@ export class FSBackend implements FileBackend {
     await fs.writeFile(key, JSON.stringify(value), "utf8");
   }
 
+  async writeRaw(key: string, value: Uint8Array): Promise<void> {
+    await fs.writeFile(key, value);
+  }
+
   async delete(key: string): Promise<void> {
-    await fs.unlink(key);
+    try {
+      await fs.unlink(key);
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
   }
 }

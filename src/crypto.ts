@@ -281,13 +281,21 @@ export async function checkSignatures(
   }
 }
 
-export function bufferEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.byteLength !== b.byteLength) {
-    return false;
+export function bufferEqual(a: string | Uint8Array, b: string | Uint8Array): boolean {
+  if (typeof a === "string" && typeof b === "string") {
+    return a === b;
   }
 
-  for (let i = 0; i < a.byteLength; i++) {
-    if (a[i] !== b[i]) return false;
+  if (a instanceof Uint8Array && b instanceof Uint8Array) {
+    if (a.byteLength !== b.byteLength) {
+      return false;
+    }
+    for (let i = 0; i < a.byteLength; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
   }
-  return true;
+
+  return false;
 }
+
