@@ -6,6 +6,9 @@ A minimal TypeScript implementation of [The Update Framework (TUF)](https://theu
 
 This is a lightweight alternative to [tuf-js](https://github.com/theupdateframework/tuf-js) that focuses on core TUF functionality needed for secure software updates in browser environments.
 
+> [!CAUTION]  
+> This library has not received an independent security audit. Maintenance is performed by volunteers, and the project is not officially supported or endorsed by the Freedom of the Press Foundation.
+
 ## Features
 
 - **Core TUF Security**: Implements essential TUF security guarantees including rollback protection, key rotation, and consistent snapshots
