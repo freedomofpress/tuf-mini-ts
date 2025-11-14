@@ -279,7 +279,10 @@ export async function checkSignatures(
   }
 }
 
-export function bufferEqual(a: string | Uint8Array, b: string | Uint8Array): boolean {
+export function bufferEqual(
+  a: string | Uint8Array,
+  b: string | Uint8Array,
+): boolean {
   if (typeof a === "string" && typeof b === "string") {
     return a === b;
   }
@@ -296,4 +299,3 @@ export function bufferEqual(a: string | Uint8Array, b: string | Uint8Array): boo
 
   return false;
 }
-

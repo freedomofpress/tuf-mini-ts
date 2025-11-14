@@ -1,4 +1,9 @@
-import { bufferEqual, checkSignatures, getRoleKeys, loadKeys } from "./crypto.js";
+import {
+  bufferEqual,
+  checkSignatures,
+  getRoleKeys,
+  loadKeys,
+} from "./crypto.js";
 import { FileBackend } from "./storage.js";
 import { ExtensionStorageBackend } from "./storage/browser.js";
 import { FSBackend } from "./storage/filesystem.js";
@@ -13,7 +18,12 @@ export class TUFClient {
   private namespace: string;
   private backend: FileBackend;
 
-  constructor(repositoryUrl: string, startingRoot: string, namespace: string, targetBaseUrl?: string) {
+  constructor(
+    repositoryUrl: string,
+    startingRoot: string,
+    namespace: string,
+    targetBaseUrl?: string,
+  ) {
     this.repositoryUrl = repositoryUrl;
     this.targetBaseUrl = targetBaseUrl || repositoryUrl;
     this.startingRoot = startingRoot;
@@ -90,11 +100,13 @@ export class TUFClient {
     if (parts.length < 2 || parts.length > 3) {
       throw new Error(`Invalid spec_version format: ${specVersion}`);
     }
-    if (!parts.every(p => /^\d+$/.test(p))) {
+    if (!parts.every((p) => /^\d+$/.test(p))) {
       throw new Error(`spec_version parts must be numeric: ${specVersion}`);
     }
     if (parts[0] !== "1") {
-      throw new Error(`Unsupported spec_version major version: ${parts[0]} (expected 1)`);
+      throw new Error(
+        `Unsupported spec_version major version: ${parts[0]} (expected 1)`,
+      );
     }
   }
 
@@ -212,7 +224,9 @@ export class TUFClient {
       }
 
       if (newrootJson.signed.version !== new_version) {
-        throw new Error(`Version mismatch: URL version ${new_version} but file contains version ${newrootJson.signed.version}`);
+        throw new Error(
+          `Version mismatch: URL version ${new_version} but file contains version ${newrootJson.signed.version}`,
+        );
       }
 
       if (newrootJson.signed?._type !== Roles.Root) {
@@ -245,11 +259,14 @@ export class TUFClient {
     // Fast-forward recovery: If timestamp or snapshot role keys changed, delete cached metadata.
     // This allows recovery from fast-forward attacks after key rotation.
     if (root.version > oldRoot.version) {
-      const timestampKeysChanged = JSON.stringify(root.roles.timestamp.keyids.sort()) !==
+      const timestampKeysChanged =
+        JSON.stringify(root.roles.timestamp.keyids.sort()) !==
         JSON.stringify(oldRoot.roles.timestamp.keyids.sort());
-      const snapshotKeysChanged = JSON.stringify(root.roles.snapshot.keyids.sort()) !==
+      const snapshotKeysChanged =
+        JSON.stringify(root.roles.snapshot.keyids.sort()) !==
         JSON.stringify(oldRoot.roles.snapshot.keyids.sort());
-      const targetsKeysChanged = JSON.stringify(root.roles.targets.keyids.sort()) !==
+      const targetsKeysChanged =
+        JSON.stringify(root.roles.targets.keyids.sort()) !==
         JSON.stringify(oldRoot.roles.targets.keyids.sort());
 
       if (timestampKeysChanged) {
@@ -293,12 +310,19 @@ export class TUFClient {
     this.validateMetadata(newTimestamp);
 
     if (newTimestamp.signed._type !== Roles.Timestamp) {
-      throw new Error(`Invalid metadata type: expected ${Roles.Timestamp}, got ${newTimestamp.signed._type}`);
+      throw new Error(
+        `Invalid metadata type: expected ${Roles.Timestamp}, got ${newTimestamp.signed._type}`,
+      );
     }
 
     // Validate required meta field
-    if (!newTimestamp.signed.meta || !newTimestamp.signed.meta["snapshot.json"]) {
-      throw new Error("Timestamp metadata missing required meta['snapshot.json']");
+    if (
+      !newTimestamp.signed.meta ||
+      !newTimestamp.signed.meta["snapshot.json"]
+    ) {
+      throw new Error(
+        "Timestamp metadata missing required meta['snapshot.json']",
+      );
     }
 
     // Spec 5.4.2
@@ -341,7 +365,10 @@ export class TUFClient {
       throw new Error("Freeze attack on the timestamp metafile.");
     }
 
-    await this.backend.writeRaw(this.getCacheKey(Roles.Timestamp), newTimestampRaw);
+    await this.backend.writeRaw(
+      this.getCacheKey(Roles.Timestamp),
+      newTimestampRaw,
+    );
     return newTimestamp;
   }
 
@@ -364,10 +391,13 @@ export class TUFClient {
     }
 
     // Spec 5.5.2: Verify snapshot hash if present in timestamp
-    const snapshotHash = timestampMeta.signed.meta["snapshot.json"].hashes?.sha256;
+    const snapshotHash =
+      timestampMeta.signed.meta["snapshot.json"].hashes?.sha256;
     if (snapshotHash) {
       const computedHash = Uint8ArrayToHex(
-        new Uint8Array(await crypto.subtle.digest(HashAlgorithms.SHA256, newSnapshotRaw))
+        new Uint8Array(
+          await crypto.subtle.digest(HashAlgorithms.SHA256, newSnapshotRaw),
+        ),
       );
       if (!bufferEqual(snapshotHash, computedHash)) {
         throw new Error("Snapshot hash does not match timestamp hash");
@@ -378,12 +408,16 @@ export class TUFClient {
     this.validateMetadata(newSnapshot);
 
     if (newSnapshot.signed._type !== Roles.Snapshot) {
-      throw new Error(`Invalid metadata type: expected ${Roles.Snapshot}, got ${newSnapshot.signed._type}`);
+      throw new Error(
+        `Invalid metadata type: expected ${Roles.Snapshot}, got ${newSnapshot.signed._type}`,
+      );
     }
 
     // Validate required meta field
     if (!newSnapshot.signed.meta || !newSnapshot.signed.meta["targets.json"]) {
-      throw new Error("Snapshot metadata missing required meta['targets.json']");
+      throw new Error(
+        "Snapshot metadata missing required meta['targets.json']",
+      );
     }
 
     // Spec 5.5.3
@@ -431,7 +465,10 @@ export class TUFClient {
     }
 
     // 5.5.7 - Store raw bytes to preserve exact serialization
-    await this.backend.writeRaw(this.getCacheKey(Roles.Snapshot), newSnapshotRaw);
+    await this.backend.writeRaw(
+      this.getCacheKey(Roles.Snapshot),
+      newSnapshotRaw,
+    );
 
     // If we reach here, we expect updates, otherwise we would have aborted in the timestamp phase.
     return newSnapshot.signed.meta;
@@ -482,7 +519,9 @@ export class TUFClient {
     this.validateMetadata(newTargets);
 
     if (newTargets.signed._type !== Roles.Targets) {
-      throw new Error(`Invalid metadata type: expected ${Roles.Targets}, got ${newTargets.signed._type}`);
+      throw new Error(
+        `Invalid metadata type: expected ${Roles.Targets}, got ${newTargets.signed._type}`,
+      );
     }
 
     // Spec 5.6.3
@@ -569,10 +608,11 @@ export class TUFClient {
     }
 
     // For consistent snapshots, construct URL preserving directory structure: targets/dir/subdir/HASH.filename
-    const lastSlash = name.lastIndexOf('/');
-    const targetUrl = lastSlash === -1
-      ? `${this.targetBaseUrl}${hashValue}.${name}` // No directory: HASH.filename
-      : `${this.targetBaseUrl}${name.substring(0, lastSlash + 1)}${hashValue}.${name.substring(lastSlash + 1)}`; // dir/HASH.filename
+    const lastSlash = name.lastIndexOf("/");
+    const targetUrl =
+      lastSlash === -1
+        ? `${this.targetBaseUrl}${hashValue}.${name}` // No directory: HASH.filename
+        : `${this.targetBaseUrl}${name.substring(0, lastSlash + 1)}${hashValue}.${name.substring(lastSlash + 1)}`; // dir/HASH.filename
 
     // console.log("[TUF]", "Fetching target", targetUrl);
 
@@ -584,9 +624,7 @@ export class TUFClient {
     }
     const raw_file = new Uint8Array(await response.arrayBuffer());
     const hash_calculated = Uint8ArrayToHex(
-      new Uint8Array(
-        await crypto.subtle.digest(cryptoAlgo, raw_file),
-      ),
+      new Uint8Array(await crypto.subtle.digest(cryptoAlgo, raw_file)),
     );
 
     if (!bufferEqual(hashValue, hash_calculated)) {
@@ -602,10 +640,7 @@ export class TUFClient {
     // Spec 5.1
     const frozenTimestamp = new Date();
     const root: Root = await this.updateRoot(frozenTimestamp);
-    const timestampMeta = await this.updateTimestamp(
-      root,
-      frozenTimestamp,
-    );
+    const timestampMeta = await this.updateTimestamp(root, frozenTimestamp);
 
     // If timestamp hasn't changed, no need to update snapshot/targets
     if (timestampMeta === null) {

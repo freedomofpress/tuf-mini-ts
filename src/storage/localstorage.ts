@@ -1,6 +1,10 @@
 import { FileBackend } from "../storage.js";
 import { Metafile } from "../types.js";
-import { isRawBytesWrapper, decodeRawBytesWrapper, createRawBytesWrapper } from "./encoding.js";
+import {
+  createRawBytesWrapper,
+  decodeRawBytesWrapper,
+  isRawBytesWrapper,
+} from "./encoding.js";
 
 export class LocalStorageBackend implements FileBackend {
   async read(key: string): Promise<Metafile | undefined> {
