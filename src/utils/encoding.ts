@@ -1,13 +1,13 @@
-export function base64ToUint8Array(base64: string): Uint8Array {
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const binaryString = atob(base64);
   const length = binaryString.length;
   const bytes = new Uint8Array(length);
 
   for (let i = 0; i < length; i++) {
-    bytes[i] = binaryString.charCodeAt(i); // Convert binary string to byte array
+    bytes[i] = binaryString.charCodeAt(i);
   }
 
-  return bytes;
+  return bytes.buffer.slice(0);
 }
 
 export function Uint8ArrayToBase64(uint8Array: Uint8Array): string {
@@ -20,7 +20,7 @@ export function Uint8ArrayToBase64(uint8Array: Uint8Array): string {
   return btoa(binaryString);
 }
 
-export function hexToUint8Array(hex: string): Uint8Array {
+export function hexToArrayBuffer(hex: string): ArrayBuffer {
   if (hex.length % 2 !== 0) {
     throw new Error("Hex string must have an even length");
   }
@@ -32,14 +32,15 @@ export function hexToUint8Array(hex: string): Uint8Array {
     uint8Array[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
   }
 
-  return uint8Array;
+  return uint8Array.buffer.slice(0);
 }
 
-export function Uint8ArrayToHex(uint8Array: Uint8Array): string {
+export function Uint8ArrayToHex(data: Uint8Array | ArrayBuffer): string {
+  const array = new Uint8Array(data);
   let hexString = "";
 
-  for (let i = 0; i < uint8Array.length; i++) {
-    let hex = uint8Array[i].toString(16);
+  for (let i = 0; i < array.length; i++) {
+    let hex = array[i].toString(16);
     if (hex.length === 1) {
       hex = "0" + hex;
     }
@@ -49,13 +50,12 @@ export function Uint8ArrayToHex(uint8Array: Uint8Array): string {
   return hexString;
 }
 
-export function stringToUint8Array(str: string): Uint8Array {
+export function stringToUintArrayBuffer(str: string): ArrayBuffer {
   // Defaults to utf-8, but utf-8 is ascii compatible
   const encoder = new TextEncoder();
-  return encoder.encode(str);
+  return encoder.encode(str).buffer.slice(0);
 }
 
 export function Uint8ArrayToString(uint8Array: Uint8Array): string {
-  const decoder = new TextDecoder("ascii");
-  return decoder.decode(uint8Array);
+  return new TextDecoder().decode(uint8Array);
 }

@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { base64ToUint8Array, Uint8ArrayToBase64 } from "./encoding.js";
+import { base64ToArrayBuffer, Uint8ArrayToBase64 } from "./encoding.js";
 
 const PEM_HEADER = /-----BEGIN (.*)-----/;
 const PEM_FOOTER = /-----END (.*)-----/;
 
-export function toDER(certificate: string): Uint8Array {
+export function toDER(certificate: string): ArrayBuffer {
   let der = "";
 
   certificate.split("\n").forEach((line) => {
@@ -30,7 +30,7 @@ export function toDER(certificate: string): Uint8Array {
     der += line;
   });
 
-  return base64ToUint8Array(der);
+  return base64ToArrayBuffer(der);
 }
 
 // Translates a DER-encoded buffer into a PEM-encoded string. Standard PEM

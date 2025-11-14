@@ -396,7 +396,10 @@ export class TUFClient {
     if (snapshotHash) {
       const computedHash = Uint8ArrayToHex(
         new Uint8Array(
-          await crypto.subtle.digest(HashAlgorithms.SHA256, newSnapshotRaw),
+          await crypto.subtle.digest(
+            HashAlgorithms.SHA256,
+            new Uint8Array(newSnapshotRaw),
+          ),
         ),
       );
       if (!bufferEqual(snapshotHash, computedHash)) {
@@ -500,11 +503,9 @@ export class TUFClient {
 
     if (snapshot[`${Roles.Targets}.json`].hashes?.sha256) {
       const newTargetsRaw_sha256 = Uint8ArrayToHex(
-        new Uint8Array(
-          await crypto.subtle.digest(
-            HashAlgorithms.SHA256,
-            new Uint8Array(newTargetsRaw),
-          ),
+        await crypto.subtle.digest(
+          HashAlgorithms.SHA256,
+          new Uint8Array(newTargetsRaw),
         ),
       );
 
@@ -577,7 +578,7 @@ export class TUFClient {
     return filenames;
   }
 
-  private async fetchTarget(name: string): Promise<Uint8Array> {
+  private async fetchTarget(name: string): Promise<ArrayBuffer> {
     const cachedTargets = await this.getFromCache(Roles.Targets);
 
     if (cachedTargets === undefined) {
@@ -622,9 +623,9 @@ export class TUFClient {
         `Failed to fetch target: ${response.status} ${response.statusText}`,
       );
     }
-    const raw_file = new Uint8Array(await response.arrayBuffer());
+    const raw_file = await response.arrayBuffer();
     const hash_calculated = Uint8ArrayToHex(
-      new Uint8Array(await crypto.subtle.digest(cryptoAlgo, raw_file)),
+      await crypto.subtle.digest(cryptoAlgo, raw_file),
     );
 
     if (!bufferEqual(hashValue, hash_calculated)) {
@@ -655,7 +656,7 @@ export class TUFClient {
     await this.updateTargets(root, frozenTimestamp, snapshot);
   }
 
-  async getTarget(name: string): Promise<Uint8Array> {
+  async getTarget(name: string): Promise<ArrayBuffer> {
     return await this.fetchTarget(name);
   }
 }
