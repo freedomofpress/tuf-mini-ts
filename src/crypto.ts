@@ -8,9 +8,9 @@ import {
 import { ASN1Obj } from "./utils/asn1/index.js";
 import { canonicalize } from "./utils/canonicalize.js";
 import {
-  base64ToUint8Array,
-  hexToUint8Array,
-  stringToUint8Array,
+  base64ToArrayBuffer,
+  hexToArrayBuffer,
+  stringToUintArrayBuffer,
   Uint8ArrayToHex,
 } from "./utils/encoding.js";
 import { toDER } from "./utils/pem.js";
@@ -46,7 +46,7 @@ export async function loadKeys(
       new Uint8Array(
         await crypto.subtle.digest(
           "SHA-256",
-          stringToUint8Array(canonicalize(key)),
+          stringToUintArrayBuffer(canonicalize(key)),
         ),
       ),
     );
@@ -83,7 +83,7 @@ export async function importKey(
 ): Promise<CryptoKey> {
   class importParams {
     format: "raw" | "spki" = "spki";
-    keyData: ArrayBuffer = new Uint8Array();
+    keyData: ArrayBuffer = new ArrayBuffer();
     algorithm: {
       name: "ECDSA" | "Ed25519" | "RSASSA-PKCS1-v1_5" | "RSA-PSS" | "RSA-OAEP";
       namedCurve?: EcdsaTypes;
@@ -101,11 +101,11 @@ export async function importKey(
   } else if (/^[0-9A-Fa-f]+$/.test(key)) {
     // Is it hex?
     params.format = "raw";
-    params.keyData = hexToUint8Array(key);
+    params.keyData = hexToArrayBuffer(key);
   } else {
     // It might be base64, without the PEM header, as in sigstore trusted_root
     params.format = "spki";
-    params.keyData = base64ToUint8Array(key);
+    params.keyData = base64ToArrayBuffer(key);
   }
 
   // Let's see supported key types
@@ -141,8 +141,8 @@ export async function importKey(
 
 export async function verifySignature(
   key: CryptoKey,
-  signed: Uint8Array,
-  sig: Uint8Array,
+  signed: ArrayBuffer,
+  sig: ArrayBuffer,
   hash: string = "sha256",
 ): Promise<boolean> {
   const options: {
@@ -192,8 +192,12 @@ export async function verifySignature(
       const s = asn1_sig.subs[1].toInteger();
       // Sometimes the integers can be less than the average, and we would miss bytes. The functione expects a finxed
       // input in bytes depending on the curve, or it fails early.
-      const binr = hexToUint8Array(r.toString(16).padStart(sig_size * 2, "0"));
-      const bins = hexToUint8Array(s.toString(16).padStart(sig_size * 2, "0"));
+      const binr = new Uint8Array(
+        hexToArrayBuffer(r.toString(16).padStart(sig_size * 2, "0")),
+      );
+      const bins = new Uint8Array(
+        hexToArrayBuffer(s.toString(16).padStart(sig_size * 2, "0")),
+      );
       raw_signature = new Uint8Array(binr.length + bins.length);
       raw_signature.set(binr, 0);
       raw_signature.set(bins, binr.length);
@@ -202,10 +206,15 @@ export async function verifySignature(
       return false;
     }
 
-    return await crypto.subtle.verify(options, key, raw_signature, signed);
+    return await crypto.subtle.verify(
+      options,
+      key,
+      raw_signature.slice(),
+      signed,
+    );
   } else if (key.algorithm.name === KeyTypes.Ed25519) {
     // Ed25519 has built-in SHA-512 hashing, no hash parameter needed
-    return await crypto.subtle.verify(options, key, sig, signed);
+    return await crypto.subtle.verify(options, key, sig.slice(), signed);
   } else if (key.algorithm.name === KeyTypes.RSA) {
     throw new Error("RSA could work, if only someone coded the support :)");
   } else {
@@ -256,7 +265,7 @@ export async function checkSignatures(
 
     // Step 3, grab the correct CryptoKey
     const key = keys.get(signature.keyid);
-    const sig = hexToUint8Array(signature.sig);
+    const sig = hexToArrayBuffer(signature.sig);
 
     if (!key) {
       throw new Error("Keyid was empty.");
@@ -264,8 +273,11 @@ export async function checkSignatures(
 
     // We checked before that the key exists
     if (
-      (await verifySignature(key, stringToUint8Array(signed_canon), sig)) ===
-      true
+      (await verifySignature(
+        key,
+        stringToUintArrayBuffer(signed_canon),
+        sig,
+      )) === true
     ) {
       // We used to halt on error, but... https://github.com/sigstore/root-signing/issues/1448
       valid_signatures++;

@@ -83,7 +83,7 @@ async function main() {
 
       await fs.mkdir(targetDir, { recursive: true });
       const outPath = path.join(targetDir, path.basename(targetName));
-      await fs.writeFile(outPath, target);
+      await fs.writeFile(outPath, new Uint8Array(target));
       process.exit(0);
     }
   } catch (err) {
