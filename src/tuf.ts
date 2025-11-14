@@ -41,6 +41,14 @@ export class TUFClient {
   }
 
   private getCacheKey(key: string): string {
+    if (
+      key.startsWith("/") ||
+      key.startsWith("./") ||
+      key.includes("..") ||
+      key.includes("\\")
+    ) {
+      throw new Error(`key contains an invalid pattern (${key})`);
+    }
     return `${this.namespace}/${key}.json`;
   }
 
