@@ -137,8 +137,8 @@ The core TUF functionality is implemented (metadata verification, signature chec
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details. Portions of this package incorporate code from [sigstore-js](https://github.com/sigstore/sigstore-js) and are licensed under the Apache License 2.0. These sections are clearly indicated in the corresponding source file headers.
 
 ## Acknowledgments
 
-This project is based on the TUF specification and adapted from [tuf-js](https://github.com/theupdateframework/tuf-js).
+This project is based on the [TUF specification](https://theupdateframework.github.io/specification/v1.0.33/index.html) and adapted from [tuf-js](https://github.com/theupdateframework/tuf-js) and [sigstore-js](https://github.com/sigstore/sigstore-js).
